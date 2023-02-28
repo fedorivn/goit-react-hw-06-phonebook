@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
+import { useDispatch, useSelector } from 'react-redux';
+import { addNewContact } from 'redux/contacts/contsctsSlice';
 
 import { Contacts, Label, Input, Button } from './Form.styled';
 
-export default function Form({ onSubmit }) {
+export default function Form() {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
+  const dispatch = useDispatch();
+  const contacts = useSelector(state => state.contacts.contacts);
 
   const handleInputChange = event => {
     const { name, value } = event.target;
@@ -21,16 +25,27 @@ export default function Form({ onSubmit }) {
     }
   };
 
-  const resetForm = event => {
-    setName('');
-    setNumber('');
-  };
+  const checkDuplicate = value =>
+    contacts.some(({ name }) => name.toLowerCase() === value.toLowerCase());
+
 
   const handleSubmit = e => {
     e.preventDefault();
-    onSubmit(name, number);
-    resetForm();
+    checkDuplicate(name);
+    const form = e.currentTarget;
+
+    const foundName = contacts.find(contact => contact.name === name);
+    if (foundName) {
+      toast.error(`${contacts.name} is already in your contact list`);
+      return;
+    }
+
+    dispatch(addNewContact({ name, number }));
+    form.reset();
+
+ 
   };
+
   return (
     <Contacts onSubmit={handleSubmit}>
       <Label>
@@ -62,6 +77,4 @@ export default function Form({ onSubmit }) {
   );
 }
 
-Form.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
-};
+
